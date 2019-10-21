@@ -1,0 +1,33 @@
+---
+- name: upgrade_kernel.yml
+  hosts: all
+  tasks:
+  - name: create directory
+    file:
+      path: /root/upgrade-kernel
+      state: directory
+
+  - name: download first packages
+    get_url:
+      url: https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.3/linux-image-unsigned-5.3.0-050300-generic_5.3.0-050300.201909152230_amd64.deb
+      dest: /root/upgrade-kernel/
+
+  - name: download second package
+    get_url:
+      url: https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.3/linux-modules-5.3.0-050300-generic_5.3.0-050300.201909152230_amd64.deb
+      dest: /root/upgrade-kernel/
+
+  - name: install kernel
+    shell: dpkg -i *.deb
+    args:
+      chdir: /root/upgrade-kernel
+
+  - name: Reboot immediately if there was a change
+    shell: "sleep 5 && reboot"
+    async: 1
+    poll: 0
+
+  - name: Wait for the reboot to complete if there was a change
+    wait_for_connection:
+      delay: 60
+      timeout: 300
